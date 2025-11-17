@@ -1,48 +1,46 @@
 """
-Database Schemas
+Database Schemas for Boccone Restaurant
 
-Define your MongoDB collection schemas here using Pydantic models.
-These schemas are used for data validation in your application.
-
-Each Pydantic model represents a collection in your database.
-Model name is converted to lowercase for the collection name:
-- User -> "user" collection
-- Product -> "product" collection
-- BlogPost -> "blogs" collection
+Each Pydantic model represents a collection in MongoDB.
+Class name (lowercased) becomes the collection name.
 """
+from pydantic import BaseModel, Field, EmailStr
+from typing import Optional, List
+from datetime import datetime
 
-from pydantic import BaseModel, Field
-from typing import Optional
 
-# Example schemas (replace with your own):
-
-class User(BaseModel):
+class Dish(BaseModel):
     """
-    Users collection schema
-    Collection name: "user" (lowercase of class name)
+    Menu items (mainly pasta). Collection: "dish"
     """
-    name: str = Field(..., description="Full name")
-    email: str = Field(..., description="Email address")
-    address: str = Field(..., description="Address")
-    age: Optional[int] = Field(None, ge=0, le=120, description="Age in years")
-    is_active: bool = Field(True, description="Whether user is active")
+    name: str = Field(..., description="Dish name")
+    description: Optional[str] = Field(None, description="Short description")
+    category: str = Field("pasta", description="Category: pasta, sauce, topping, extra")
+    price: float = Field(..., ge=0, description="Price in EUR")
+    tags: List[str] = Field(default_factory=list, description="Tags like vegan, spicy, gluten-free")
+    image: Optional[str] = Field(None, description="Public image URL if any")
+    featured: bool = Field(False, description="Whether to show in highlights")
 
-class Product(BaseModel):
+
+class Reservation(BaseModel):
     """
-    Products collection schema
-    Collection name: "product" (lowercase of class name)
+    Guest reservations. Collection: "reservation"
     """
-    title: str = Field(..., description="Product title")
-    description: Optional[str] = Field(None, description="Product description")
-    price: float = Field(..., ge=0, description="Price in dollars")
-    category: str = Field(..., description="Product category")
-    in_stock: bool = Field(True, description="Whether product is in stock")
+    name: str = Field(..., description="Guest full name")
+    email: Optional[EmailStr] = Field(None, description="Email address")
+    phone: str = Field(..., description="Contact phone")
+    date: str = Field(..., description="Reservation date (YYYY-MM-DD)")
+    time: str = Field(..., description="Reservation time (HH:MM)")
+    guests: int = Field(..., ge=1, le=20, description="Number of guests")
+    notes: Optional[str] = Field(None, description="Special requests")
 
-# Add your own schemas here:
-# --------------------------------------------------
 
-# Note: The Flames database viewer will automatically:
-# 1. Read these schemas from GET /schema endpoint
-# 2. Use them for document validation when creating/editing
-# 3. Handle all database operations (CRUD) directly
-# 4. You don't need to create any database endpoints!
+class BocconeBuild(BaseModel):
+    """
+    A custom first-course build composed of small bites (bocconi). Collection: "bocconebuild"
+    """
+    title: str = Field(..., description="User-given name for the build")
+    items: List[str] = Field(..., description="List of dish IDs or names included")
+    price: float = Field(..., ge=0, description="Computed price")
+    customer_name: Optional[str] = Field(None, description="Optional name of creator")
+    created_at: Optional[datetime] = None
